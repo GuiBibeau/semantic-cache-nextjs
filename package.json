@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@ai-sdk/openai": "^0.0.40",
+    "@radix-ui/react-switch": "^1.1.0",
     "@upstash/semantic-cache": "^1.0.3",
     "@upstash/vector": "^1.1.5",
     "ai": "^3.3.0",

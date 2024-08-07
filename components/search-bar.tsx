@@ -2,17 +2,20 @@
 
 import { useState, useCallback, ChangeEvent, FormEvent } from "react";
 import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
 
 interface SearchResult {
   title: string;
   description: string;
   duration: number;
+  cacheUsed: string;
 }
 
 export function SearchBar() {
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [useSemanticCacheB, setUseSemanticCacheB] = useState<boolean>(false);
 
   const handleSearch = (e: ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
@@ -29,7 +32,10 @@ export function SearchBar() {
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ query: searchQuery }),
+          body: JSON.stringify({
+            query: searchQuery,
+            cacheType: useSemanticCacheB ? "B" : "A",
+          }),
         });
 
         if (!response.ok) {
@@ -40,7 +46,12 @@ export function SearchBar() {
         const endTime = performance.now();
         const duration = endTime - startTime;
         setSearchResults((prevResults) => [
-          { title: searchQuery, description: data.description, duration },
+          {
+            title: searchQuery,
+            description: data.description,
+            duration,
+            cacheUsed: data.cacheUsed,
+          },
           ...prevResults,
         ]);
         setSearchQuery("");
@@ -50,11 +61,18 @@ export function SearchBar() {
         setIsLoading(false);
       }
     },
-    [searchQuery]
+    [searchQuery, useSemanticCacheB]
   );
 
   return (
     <div className="w-full max-w-md mx-auto">
+      <div className="flex items-center justify-between mb-4">
+        <span className="text-sm font-medium">Use Semantic Cache B</span>
+        <Switch
+          checked={useSemanticCacheB}
+          onCheckedChange={setUseSemanticCacheB}
+        />
+      </div>
       <form onSubmit={handleSubmit} className="relative">
         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
           <SearchIcon className="h-5 w-5 text-muted-foreground" />
@@ -84,6 +102,9 @@ export function SearchBar() {
               <p className="text-muted-foreground">{result.description}</p>
               <p className="text-sm text-muted-foreground mt-2">
                 API call duration: {result.duration.toFixed(2)}ms
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Cache used: {result.cacheUsed}
               </p>
             </div>
           ))}
